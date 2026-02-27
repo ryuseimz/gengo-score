@@ -455,36 +455,19 @@ async function submitAnswer() {
             { text: prompt }
           ]
         }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 500 }
+        generationConfig: { temperature: 0.3, maxOutputTokens: 500, responseMimeType: "application/json" }
       })
     });
 
     const data = await response.json();
     if (data.error) throw new Error(data.error.message);
 
-    // Gemini 2.5 may return multiple parts (thinking + response)
     const parts = data.candidates[0].content.parts;
     let content = '';
     for (const p of parts) {
-      if (p.text && !p.thought) content += p.text;
+      if (p.text) content += p.text;
     }
-    // Extract JSON robustly
-    let jsonStr;
-    // Try code block
-    const codeMatch = content.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
-    if (codeMatch) {
-      jsonStr = codeMatch[1].trim();
-    } else {
-      // Find first { to last }
-      const start = content.indexOf('{');
-      const end = content.lastIndexOf('}');
-      if (start !== -1 && end !== -1) {
-        jsonStr = content.substring(start, end + 1);
-      } else {
-        jsonStr = content.trim();
-      }
-    }
-    const result = JSON.parse(jsonStr);
+    const result = JSON.parse(content);
 
     showScore(result, img, input);
   } catch (e) {

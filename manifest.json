@@ -1,0 +1,22 @@
+{
+  "name": "GengoScore - 言語化バトル",
+  "short_name": "GengoScore",
+  "description": "言語化力を鍛えろ。絵を見て、言葉で伝えろ。",
+  "start_url": "/gengo-score/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

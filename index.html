@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>言語化バトル - GengoScore</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    min-height: 100vh;
+  }
+  .container { max-width: 720px; margin: 0 auto; padding: 20px; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 30px 0 20px;
+  }
+  .header h1 {
+    font-size: 2rem;
+    background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+  }
+  .header p { color: #888; font-size: 0.9rem; }
+
+  /* API Key */
+  .api-section {
+    background: #1a1a1a;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    border: 1px solid #2a2a2a;
+  }
+  .api-section label { font-size: 0.85rem; color: #888; }
+  .api-section input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+  }
+
+  /* Game Area */
+  .game-area { display: none; }
+
+  /* Image Display */
+  .image-card {
+    background: #1a1a1a;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #2a2a2a;
+    margin-bottom: 16px;
+  }
+  .image-card img {
+    width: 100%;
+    height: 380px;
+    object-fit: cover;
+    display: block;
+  }
+  .image-meta {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .difficulty {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .diff-easy { background: #1a3a1a; color: #6bcb77; }
+  .diff-medium { background: #3a3a1a; color: #ffd93d; }
+  .diff-hard { background: #3a1a1a; color: #ff6b6b; }
+
+  /* Timer */
+  .timer-bar {
+    height: 4px;
+    background: #222;
+    border-radius: 2px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .timer-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6bcb77, #ffd93d, #ff6b6b);
+    border-radius: 2px;
+    transition: width 1s linear;
+  }
+  .timer-text {
+    text-align: center;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Input */
+  .input-area {
+    margin-bottom: 16px;
+  }
+  .input-area textarea {
+    width: 100%;
+    height: 120px;
+    padding: 14px;
+    background: #1a1a1a;
+    border: 2px solid #2a2a2a;
+    border-radius: 12px;
+    color: #e0e0e0;
+    font-size: 1rem;
+    line-height: 1.6;
+    resize: none;
+    transition: border-color 0.2s;
+  }
+  .input-area textarea:focus {
+    outline: none;
+    border-color: #ffd93d;
+  }
+  .input-area textarea:disabled {
+    opacity: 0.5;
+  }
+  .char-count {
+    text-align: right;
+    font-size: 0.8rem;
+    color: #555;
+    margin-top: 4px;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary {
+    background: linear-gradient(135deg, #ffd93d, #ff6b6b);
+    color: #0a0a0a;
+  }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(255,107,107,0.3); }
+  .btn-start {
+    background: linear-gradient(135deg, #6bcb77, #4ecdc4);
+    color: #0a0a0a;
+  }
+  .btn-next {
+    background: linear-gradient(135deg, #4ecdc4, #44a8f5);
+    color: #0a0a0a;
+    margin-top: 12px;
+  }
+
+  /* Score Card */
+  .score-card {
+    display: none;
+    background: #1a1a1a;
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid #2a2a2a;
+    margin-top: 16px;
+    animation: fadeIn 0.5s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .total-score {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .total-score .number {
+    font-size: 4rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #ffd93d, #ff6b6b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .total-score .label { color: #888; font-size: 0.85rem; }
+
+  .score-breakdown {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .score-item {
+    background: #111;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+  .score-item .val {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffd93d;
+  }
+  .score-item .lbl {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 4px;
+  }
+
+  .feedback {
+    background: #111;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #bbb;
+  }
+  .feedback strong { color: #e0e0e0; }
+
+  /* Loading */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 30px;
+  }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid #333;
+    border-top-color: #ffd93d;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Round info */
+  .round-info {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 12px;
+  }
+
+  /* History */
+  .history { margin-top: 24px; }
+  .history h3 { font-size: 1rem; color: #888; margin-bottom: 12px; }
+  .history-item {
+    display: flex; align-items: center; gap: 12px;
+    background: #1a1a1a; border-radius: 10px; padding: 10px; margin-bottom: 8px;
+    border: 1px solid #2a2a2a;
+  }
+  .history-item img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; }
+  .history-item .hi-score { font-size: 1.2rem; font-weight: 700; color: #ffd93d; margin-left: auto; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🔥 GengoScore</h1>
+    <p>言語化力を鍛えろ。絵を見て、言葉で伝えろ。</p>
+  </div>
+
+  <!-- API Key -->
+  <div class="api-section" id="apiSection">
+    <label>OpenAI API Key（画像分析＆採点に使用）</label>
+    <input type="password" id="apiKey" placeholder="sk-..." />
+    <br><br>
+    <button class="btn btn-start" onclick="startGame()">🎮 ゲームスタート</button>
+  </div>
+
+  <!-- Game -->
+  <div class="game-area" id="gameArea">
+    <div class="round-info" id="roundInfo"></div>
+
+    <div class="image-card">
+      <img id="gameImage" src="" alt="お題画像" />
+      <div class="image-meta">
+        <span class="difficulty" id="diffLabel"></span>
+        <span id="roundNum" style="font-size:0.85rem;color:#666;"></span>
+      </div>
+    </div>
+
+    <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+    <div class="timer-text" id="timerText">60</div>
+
+    <div class="input-area">
+      <textarea id="userInput" placeholder="この画像に何が描かれているか、できるだけ正確に言葉で説明してください..." maxlength="500"></textarea>
+      <div class="char-count"><span id="charCount">0</span> / 500</div>
+    </div>
+
+    <button class="btn btn-primary" id="submitBtn" onclick="submitAnswer()">⚡ 採点する</button>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>AIが採点中...</p>
+    </div>
+
+    <div class="score-card" id="scoreCard">
+      <div class="total-score">
+        <div class="number" id="totalScore">0</div>
+        <div class="label">TOTAL SCORE</div>
+      </div>
+      <div class="score-breakdown">
+        <div class="score-item">
+          <div class="val" id="accScore">0</div>
+          <div class="lbl">的確さ</div>
+        </div>
+        <div class="score-item">
+          <div class="val" id="covScore">0</div>
+          <div class="lbl">網羅性</div>
+        </div>
+        <div class="score-item">
+          <div class="val" id="expScore">0</div>
+          <div class="lbl">表現力</div>
+        </div>
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <button class="btn btn-next" onclick="nextRound()">🔄 次のお題へ</button>
+    </div>
+
+    <div class="history" id="history" style="display:none;">
+      <h3>📊 履歴</h3>
+      <div id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const IMAGES = [
+  { url: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=800", diff: "easy", label: "かんたん" },
+  { url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800", diff: "easy", label: "かんたん" },
+  { url: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800", diff: "medium", label: "ふつう" },
+  { url: "https://images.unsplash.com/photo-1547891654-e66ed7ebb968?w=800", diff: "medium", label: "ふつう" },
+  { url: "https://images.unsplash.com/photo-1509909756405-be0199881695?w=800", diff: "medium", label: "ふつう" },
+  { url: "https://images.unsplash.com/photo-1604871000636-074fa5117945?w=800", diff: "hard", label: "むずい" },
+  { url: "https://images.unsplash.com/photo-1482160549825-59d1b23cb208?w=800", diff: "hard", label: "むずい" },
+  { url: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=800", diff: "hard", label: "むずい" },
+  { url: "https://images.unsplash.com/photo-1549490349-8643362247b5?w=800", diff: "hard", label: "むずい" },
+  { url: "https://images.unsplash.com/photo-1633186710895-309db2eca9e4?w=800", diff: "easy", label: "かんたん" },
+];
+
+let apiKey = '';
+let currentRound = 0;
+let timer = null;
+let timeLeft = 60;
+let usedImages = [];
+let history = [];
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startGame() {
+  apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey.startsWith('sk-')) {
+    alert('OpenAI APIキーを入力してください');
+    return;
+  }
+  document.getElementById('apiSection').style.display = 'none';
+  document.getElementById('gameArea').style.display = 'block';
+  usedImages = shuffleArray(IMAGES);
+  currentRound = 0;
+  history = [];
+  loadRound();
+}
+
+function loadRound() {
+  if (currentRound >= usedImages.length) {
+    usedImages = shuffleArray(IMAGES);
+    currentRound = 0;
+  }
+  const img = usedImages[currentRound];
+  document.getElementById('gameImage').src = img.url;
+  const dl = document.getElementById('diffLabel');
+  dl.textContent = img.label;
+  dl.className = 'difficulty diff-' + img.diff;
+  document.getElementById('roundNum').textContent = `Round ${history.length + 1}`;
+  document.getElementById('roundInfo').textContent = '';
+
+  // Reset UI
+  document.getElementById('userInput').value = '';
+  document.getElementById('userInput').disabled = false;
+  document.getElementById('charCount').textContent = '0';
+  document.getElementById('submitBtn').style.display = 'block';
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('scoreCard').style.display = 'none';
+  document.getElementById('loading').style.display = 'none';
+
+  // Start timer
+  timeLeft = 60;
+  document.getElementById('timerText').textContent = '60';
+  document.getElementById('timerFill').style.width = '100%';
+  clearInterval(timer);
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timerText').textContent = timeLeft;
+    document.getElementById('timerFill').style.width = (timeLeft / 60 * 100) + '%';
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      submitAnswer();
+    }
+  }, 1000);
+
+  document.getElementById('userInput').focus();
+}
+
+async function submitAnswer() {
+  clearInterval(timer);
+  const input = document.getElementById('userInput').value.trim();
+  if (!input) {
+    alert('説明を入力してください！');
+    return;
+  }
+
+  document.getElementById('userInput').disabled = true;
+  document.getElementById('submitBtn').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+
+  const img = usedImages[currentRound];
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `あなたは「言語化力」を採点するAI審査員です。
+ユーザーが画像を見て書いた説明文を、以下の3つの観点で採点してください。
+
+1. 的確さ (accuracy): 画像の内容を正確に捉えているか (0-100)
+2. 網羅性 (coverage): 重要な要素をどれだけカバーしているか (0-100)  
+3. 表現力 (expression): 簡潔で分かりやすい表現ができているか (0-100)
+
+必ず以下のJSON形式のみで返答してください:
+{
+  "accuracy": 数値,
+  "coverage": 数値,
+  "expression": 数値,
+  "total": 3つの平均(小数点切り捨て),
+  "feedback": "良かった点と改善点を2-3文で。具体的に何が足りなかったか、何が上手かったかを指摘。"
+}`
+          },
+          {
+            role: 'user',
+            content: [
+              { type: 'image_url', image_url: { url: img.url } },
+              { type: 'text', text: `この画像に対するユーザーの説明文:\n\n「${input}」\n\n上記の説明文を採点してください。JSON形式で返答してください。` }
+            ]
+          }
+        ],
+        max_tokens: 500,
+        temperature: 0.3
+      })
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+
+    let content = data.choices[0].message.content;
+    // Extract JSON from markdown code blocks if present
+    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) content = jsonMatch[1];
+    const result = JSON.parse(content);
+
+    showScore(result, img, input);
+  } catch (e) {
+    alert('エラー: ' + e.message);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('submitBtn').style.display = 'block';
+    document.getElementById('userInput').disabled = false;
+  }
+}
+
+function showScore(result, img, input) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('scoreCard').style.display = 'block';
+
+  document.getElementById('totalScore').textContent = result.total;
+  document.getElementById('accScore').textContent = result.accuracy;
+  document.getElementById('covScore').textContent = result.coverage;
+  document.getElementById('expScore').textContent = result.expression;
+  document.getElementById('feedback').innerHTML = result.feedback;
+
+  history.push({ img: img.url, score: result.total, input });
+  renderHistory();
+}
+
+function renderHistory() {
+  if (history.length === 0) return;
+  document.getElementById('history').style.display = 'block';
+  document.getElementById('historyList').innerHTML = history.map((h, i) =>
+    `<div class="history-item">
+      <img src="${h.img}" alt="Round ${i+1}" />
+      <span style="color:#aaa;font-size:0.85rem;">Round ${i+1}</span>
+      <span class="hi-score">${h.score}</span>
+    </div>`
+  ).reverse().join('');
+}
+
+function nextRound() {
+  currentRound++;
+  loadRound();
+}
+
+// Char count
+document.getElementById('userInput').addEventListener('input', e => {
+  document.getElementById('charCount').textContent = e.target.value.length;
+});
+</script>
+</body>
+</html>

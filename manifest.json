@@ -1,7 +1,7 @@
 {
-  "name": "GengoScore - 言語化バトル",
-  "short_name": "GengoScore",
-  "description": "言語化力を鍛えろ。絵を見て、言葉で伝えろ。",
+  "name": "WordShot - 言葉で撃ち抜け",
+  "short_name": "WordShot",
+  "description": "言葉で撃ち抜け。見たものを、正確に。",
   "start_url": "/gengo-score/",
   "display": "standalone",
   "background_color": "#0a0a0a",

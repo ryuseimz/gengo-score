@@ -462,10 +462,26 @@ async function submitAnswer() {
     const data = await response.json();
     if (data.error) throw new Error(data.error.message);
 
-    let content = data.candidates[0].content.parts[0].text;
-    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch) content = jsonMatch[1];
-    const result = JSON.parse(content.trim());
+    // Gemini 2.5 may return multiple parts (thinking + response)
+    const parts = data.candidates[0].content.parts;
+    let content = '';
+    for (const p of parts) {
+      if (p.text) content += p.text;
+    }
+    // Extract JSON: try code block first, then find raw JSON object
+    let jsonStr;
+    const codeMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeMatch) {
+      jsonStr = codeMatch[1].trim();
+    } else {
+      const objMatch = content.match(/\{[\s\S]*"accuracy"[\s\S]*"feedback"[\s\S]*?\}/);
+      if (objMatch) {
+        jsonStr = objMatch[0];
+      } else {
+        jsonStr = content.trim();
+      }
+    }
+    const result = JSON.parse(jsonStr);
 
     showScore(result, img, input);
   } catch (e) {

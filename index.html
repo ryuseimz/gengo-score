@@ -266,11 +266,8 @@
     <p>言語化力を鍛えろ。絵を見て、言葉で伝えろ。</p>
   </div>
 
-  <!-- API Key -->
+  <!-- Start -->
   <div class="api-section" id="apiSection">
-    <label>Gemini API Key（無料で取得：<a href="https://aistudio.google.com/apikey" target="_blank" style="color:#ffd93d;">こちら</a>）</label>
-    <input type="password" id="apiKey" placeholder="AIza..." />
-    <br><br>
     <button class="btn btn-start" onclick="startGame()">🎮 ゲームスタート</button>
   </div>
 
@@ -362,11 +359,7 @@ function shuffleArray(arr) {
 }
 
 function startGame() {
-  apiKey = document.getElementById('apiKey').value.trim();
-  if (!apiKey.startsWith('AIza')) {
-    alert('Gemini APIキーを入力してください（AIza...で始まるキー）');
-    return;
-  }
+  apiKey = 'AIzaSyATgKkAXfe9jkQsYO4fIRFe1iMrLtB5wAo';
   document.getElementById('apiSection').style.display = 'none';
   document.getElementById('gameArea').style.display = 'block';
   usedImages = shuffleArray(IMAGES);

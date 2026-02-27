@@ -466,17 +466,20 @@ async function submitAnswer() {
     const parts = data.candidates[0].content.parts;
     let content = '';
     for (const p of parts) {
-      if (p.text) content += p.text;
+      if (p.text && !p.thought) content += p.text;
     }
-    // Extract JSON: try code block first, then find raw JSON object
+    // Extract JSON robustly
     let jsonStr;
-    const codeMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+    // Try code block
+    const codeMatch = content.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
     if (codeMatch) {
       jsonStr = codeMatch[1].trim();
     } else {
-      const objMatch = content.match(/\{[\s\S]*"accuracy"[\s\S]*"feedback"[\s\S]*?\}/);
-      if (objMatch) {
-        jsonStr = objMatch[0];
+      // Find first { to last }
+      const start = content.indexOf('{');
+      const end = content.lastIndexOf('}');
+      if (start !== -1 && end !== -1) {
+        jsonStr = content.substring(start, end + 1);
       } else {
         jsonStr = content.trim();
       }
